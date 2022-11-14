@@ -1,0 +1,21 @@
+{
+  "name": "Gmail Utils",
+  "description": "All the utils you need for Gmail in one extension",
+  "version": "1.0",
+  "manifest_version": 3,
+
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {},
+  "permissions": ["activeTab", "scripting", "storage"],
+  "content_scripts": [
+    {
+      "js": ["scripts/MailTracker.js"],
+      "css": ["styles/test_styles.css"],
+      "matches": [
+        "https://mail.google.com/*"
+      ]
+    }
+  ]
+}
