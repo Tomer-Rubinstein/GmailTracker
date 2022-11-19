@@ -1,7 +1,6 @@
 
 
 // let lastUrl = location.href;
-// let elm;
 
 async function HmacSHA256(message, secret) {
   const enc = new TextEncoder("utf-8");
@@ -29,21 +28,28 @@ async function sendNewEmail(){
   console.log("[DEBUG] clicked")
 
   // TODO: class name changes everyday dilemma
+
   // const profileDiv = await waitForElm('[class="gb_zf gb_Xa gb_mg gb_f"]');
   // const re_match_email = /\(([^\)]+)\)/
   // const email = profileDiv.firstChild.getAttribute("aria-label").match(re_match_email)[1];
 
-  const email = "tomerrub11@gmail.com"
+  const email = "myemail@gmail.com"
   const timestamp = Date.now();
 
-  chrome.storage.local.get(['gmail_utils_secret'], async (res) => {
-    const secret = res['gmail_utils_secret']
+  chrome.storage.local.get(['gmail_utils'], async (res) => {
+    const secret = res['gmail_utils']['gmail_utils_secret']
     const payload = `${email};${timestamp}`
 
     console.log(payload, secret)
     const mid = await HmacSHA256(payload, secret)
+
+    // store mid in localstorage
+    res['gmail_utils']['mails'].push(mid);
+    chrome.storage.local.set(res)
+
     console.log(mid)
 
+    // post request to DEBUG server
     const xhr = new XMLHttpRequest();
     const url = "http://127.0.0.1:8000/newMail/"; // DEBUG
     xhr.open("POST", url);
@@ -65,9 +71,10 @@ async function sendNewEmail(){
   const sendBtnDiv = await waitForElm('[class="dC"]');
   sendBtnDiv.firstChild.addEventListener('click', sendNewEmail);
 
+  // find element by id ":ri"
+  // inject the payload <img/>
 
-
-  // elm = await waitForElm('[class="gU a0z"]');
+  // var elm = await waitForElm('[class="gU a0z"]');
   // elm.forEach((div) => {
   //   var p = document.createElement("");
   //   p.innerText = "hey";
@@ -78,6 +85,24 @@ async function sendNewEmail(){
 
 })();
 
+
+function waitForElm(attr) {
+  return new Promise(resolve => {
+    // watch for changes in the DOM tree
+    const observer = new MutationObserver(mutations => {
+      if (document.querySelector(attr)) {
+        // resolve([...document.querySelectorAll(attr)].map(item => item.firstChild));
+        resolve(document.querySelector(attr))
+        observer.disconnect();
+      }
+    });
+
+    observer.observe(document.body, {
+      childList: true,
+      subtree: true
+    });
+  });
+}
 
 
 
@@ -112,20 +137,4 @@ async function sendNewEmail(){
 // };
 
 
-function waitForElm(attr) {
-  return new Promise(resolve => {
-    // watch for changes in the DOM tree
-    const observer = new MutationObserver(mutations => {
-      if (document.querySelector(attr)) {
-        // resolve([...document.querySelectorAll(attr)].map(item => item.firstChild));
-        resolve(document.querySelector(attr))
-        observer.disconnect();
-      }
-    });
 
-    observer.observe(document.body, {
-      childList: true,
-      subtree: true
-    });
-  });
-}

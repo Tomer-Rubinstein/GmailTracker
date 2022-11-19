@@ -14,7 +14,12 @@ function genSecret(length){
  * it will be used to generate mid(mail identifier) */
 chrome.runtime.onInstalled.addListener((details) => {
   if (details.reason == "install" || details.reason == "update"){
-    chrome.storage.local.set({"gmail_utils_secret": genSecret(32)})
+    chrome.storage.local.set({
+      "gmail_utils":{
+        "gmail_utils_secret": genSecret(32),
+        "mails": []
+      }
+    })
   }
 })
 

@@ -5,7 +5,7 @@ from pydantic import BaseModel
 import pymongo
 import mongoenv
 
-conn_str = mongoenv.mongo_connstr_gmailutils
+conn_str = mongoenv.mongo_connstr_gmailutils # TODO: sort up the env vars shenanigans
 client = pymongo.MongoClient(conn_str, serverSelectionTimeoutMS=5000)
 db = client["GmailUtils"]
 mails_collection = db["mails"]
@@ -33,3 +33,8 @@ async def newMail(data: NewMailPostData):
   #   "hasOpened": False,
   #   "openedTimestamp": 0,
   # })
+
+@app.get("/read")
+async def readMail(mid: str):
+  # TODO: ignore read open if request IP comes from sender
+  print(f"opened mail {mid}")
