@@ -1,6 +1,8 @@
 
 
 // let lastUrl = location.href;
+var trackBtnEnabled = false;
+var HOST = "https://e566-2a10-8012-19-cb86-3cd3-3179-6294-6207.eu.ngrok.io";
 
 async function HmacSHA256(message, secret) {
   const enc = new TextEncoder("utf-8");
@@ -24,10 +26,9 @@ async function HmacSHA256(message, secret) {
 }
 
 
-async function sendNewEmail(){
-  console.log("[DEBUG] clicked")
-
+async function getMid(){
   // TODO: class name changes everyday dilemma
+  // suggestion: ask users for their email
 
   // const profileDiv = await waitForElm('[class="gb_zf gb_Xa gb_mg gb_f"]');
   // const re_match_email = /\(([^\)]+)\)/
@@ -36,18 +37,28 @@ async function sendNewEmail(){
   const email = "myemail@gmail.com"
   const timestamp = Date.now();
 
-  chrome.storage.local.get(['gmail_utils'], async (res) => {
-    const secret = res['gmail_utils']['gmail_utils_secret']
-    const payload = `${email};${timestamp}`
+  return new Promise((resolve) => {
+    chrome.storage.local.get(['gmail_utils'], async (res) => {
+      const secret = res['gmail_utils']['gmail_utils_secret']
+      const payload = `${email};${timestamp}`
+      resolve(await HmacSHA256(payload, secret));
+    });
+  });
+}
 
-    console.log(payload, secret)
-    const mid = await HmacSHA256(payload, secret)
+/*
+sendNewEmail() is responsible for sending a new mid to the webserver.
+Invoked when the "send" button is clicked when composing a new gmail.
+*/
+async function sendNewEmail(){
+  if (!trackBtnEnabled) return;
+
+  chrome.storage.local.get(['gmail_utils'], async (res) => {
+    const mid = document.getElementById('gmailutils_img').getAttribute("mid");
 
     // store mid in localstorage
     res['gmail_utils']['mails'].push(mid);
     chrome.storage.local.set(res)
-
-    console.log(mid)
 
     // post request to DEBUG server
     const xhr = new XMLHttpRequest();
@@ -58,30 +69,62 @@ async function sendNewEmail(){
     xhr.send(JSON.stringify({
       "mid": mid
     }));
-
   })
-
-  // TODO: inject <img src=".../read/:<mid>" alt=" "/> to email
-
-  
 }
+
+
+async function trackBtnClicked(){
+  trackBtnEnabled = !trackBtnEnabled;
+
+  const trackBtn = document.getElementById("gmailutils_trackbtn");
+  trackBtn.innerText = (trackBtnEnabled) ? "Track ✔️" : "Track ❌";
+
+  if (trackBtnEnabled) {
+    await getMid().then((mid) => {
+      // inject <img/> payload to email content
+      var imgPayload = document.createElement("img");
+
+      imgPayload.src = HOST + "/read?mid=" + mid;
+      imgPayload.setAttribute("mid", mid);
+      imgPayload.id = "gmailutils_img";
+
+      document.getElementById(":ri").appendChild(imgPayload);
+    });
+  }
+  else if ((img = document.getElementById("gmailutils_img")) !== undefined) {
+    img.remove();
+  }
+
+}
+
+
 
 (async function main(){
   // add 'click' event listener to the send button when composing a new gmail.
   const sendBtnDiv = await waitForElm('[class="dC"]');
   sendBtnDiv.firstChild.addEventListener('click', sendNewEmail);
 
-  // find element by id ":ri"
-  // inject the payload <img/>
+  await waitForElm('[class="gU a0z"]').then((lowerDiv) => {
+    var trackBtn = document.createElement("button");
+    trackBtn.innerText = "Track ❌"
+    trackBtn.id = "gmailutils_trackbtn";
+    trackBtn.onclick = trackBtnClicked;
+    trackBtn.style = `
+      box-shadow: 1px 2px 5px gray;
+      border: none; 
+      border-radius: 5px; 
+      width: 80px; 
+      height: 25px;
+      font-family: "Century Gothic",Verdana,sans-serif;
+      background: #007FFF;
+      color: white;
+      cursor: pointer;
+      margin-right: 5px;
+      margin-left: 5px;
+    `
 
-  // var elm = await waitForElm('[class="gU a0z"]');
-  // elm.forEach((div) => {
-  //   var p = document.createElement("");
-  //   p.innerText = "hey";
-  //   p.id = "ext_read_sign";
-  //   p.style.color = "red";
-  //   div.appendChild(p);
-  // })
+    lowerDiv.appendChild(trackBtn);
+  });
 
 })();
 
