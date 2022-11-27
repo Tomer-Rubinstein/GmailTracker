@@ -2,7 +2,7 @@
 
 // let lastUrl = location.href;
 var trackBtnEnabled = false;
-var HOST = "https://e566-2a10-8012-19-cb86-3cd3-3179-6294-6207.eu.ngrok.io";
+var HOST = "https://c667-2a10-8012-19-cb86-3cd3-3179-6294-6207.eu.ngrok.io";
 
 async function HmacSHA256(message, secret) {
   const enc = new TextEncoder("utf-8");
@@ -83,10 +83,10 @@ async function trackBtnClicked(){
     await getMid().then((mid) => {
       // inject <img/> payload to email content
       var imgPayload = document.createElement("img");
-
       imgPayload.src = HOST + "/read?mid=" + mid;
       imgPayload.setAttribute("mid", mid);
       imgPayload.id = "gmailutils_img";
+      imgPayload.style.display = 'none'; // hide broken image icon
 
       document.getElementById(":ri").appendChild(imgPayload);
     });
