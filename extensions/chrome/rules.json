@@ -1,0 +1,9 @@
+[{
+  "id" : 1,
+  "priority": 1,
+  "action" : {"type" : "block"},
+  "condition" : {
+    "urlFilter" : "0536-2a10-8012-19-cb86-8400-a5ae-3b09-d89f",
+    "resourceTypes": ["image"]
+  }
+}]

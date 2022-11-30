@@ -3,12 +3,18 @@
   "description": "All the utils you need for Gmail in one extension",
   "version": "1.0",
   "manifest_version": 3,
-
   "background": {
     "service_worker": "background.js"
   },
   "action": {},
-  "permissions": ["activeTab", "scripting", "storage"],
+  "permissions": [
+    "activeTab",
+    "scripting",
+    "storage",
+    "declarativeNetRequest",
+    "declarativeNetRequestFeedback"
+  ],
+  "host_permissions": ["https://*/*"],
   "content_scripts": [
     {
       "js": ["scripts/MailTracker.js"],
@@ -17,5 +23,12 @@
         "https://mail.google.com/*"
       ]
     }
-  ]
+  ],
+  "declarative_net_request" : {
+    "rule_resources" : [{
+      "id": "ruleset_1",
+      "enabled": true,
+      "path": "rules.json"
+    }]
+  }
 }
