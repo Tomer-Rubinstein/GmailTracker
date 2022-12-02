@@ -14,11 +14,10 @@
     "declarativeNetRequest",
     "declarativeNetRequestFeedback"
   ],
-  "host_permissions": ["https://*/*"],
+  "host_permissions": ["https://*/*", "http://*/*"],
   "content_scripts": [
     {
       "js": ["scripts/MailTracker.js"],
-      "css": ["styles/test_styles.css"],
       "matches": [
         "https://mail.google.com/*"
       ]

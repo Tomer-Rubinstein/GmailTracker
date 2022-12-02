@@ -2,7 +2,7 @@
 
 // let lastUrl = location.href;
 var trackBtnEnabled = false;
-var HOST = "https://c667-2a10-8012-19-cb86-3cd3-3179-6294-6207.eu.ngrok.io";
+var HOST = "https://ac8c-2a10-8012-19-cb86-dc93-da73-7eab-1a5d.eu.ngrok.io";
 
 async function HmacSHA256(message, secret) {
   const enc = new TextEncoder("utf-8");
@@ -26,21 +26,27 @@ async function HmacSHA256(message, secret) {
 }
 
 
-async function getMid(){
+function getUserEmail(){
   // TODO: class name changes everyday dilemma
   // suggestion: ask users for their email
 
   // const profileDiv = await waitForElm('[class="gb_zf gb_Xa gb_mg gb_f"]');
   // const re_match_email = /\(([^\)]+)\)/
   // const email = profileDiv.firstChild.getAttribute("aria-label").match(re_match_email)[1];
-
   const email = "myemail@gmail.com"
+
+  return email;
+}
+
+
+async function getMid(){
   const timestamp = Date.now();
+  const email = getUserEmail();
 
   return new Promise((resolve) => {
     chrome.storage.local.get(['gmail_utils'], async (res) => {
-      const secret = res['gmail_utils']['gmail_utils_secret']
-      const payload = `${email};${timestamp}`
+      const secret = res['gmail_utils']['gmail_utils_secret'];
+      const payload = `${email};${timestamp}`;
       resolve(await HmacSHA256(payload, secret));
     });
   });
@@ -58,17 +64,18 @@ async function sendNewEmail(){
 
     // store mid in localstorage
     res['gmail_utils']['mails'].push(mid);
-    chrome.storage.local.set(res)
-
-    // post request to DEBUG server
-    const xhr = new XMLHttpRequest();
-    const url = "http://127.0.0.1:8000/newMail/"; // DEBUG
-    xhr.open("POST", url);
-    xhr.setRequestHeader('Access-Control-Allow-Origin', '*')
-    xhr.setRequestHeader('Content-Type', 'application/json;charset=UTF-8')
-    xhr.send(JSON.stringify({
-      "mid": mid
-    }));
+    chrome.storage.local.set(res);
+    
+    // post new mid to webserver
+    fetch(HOST+'/newMail/', {
+      method: 'POST',
+      mode: 'cors',
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Content-Type': 'application/json;charset=UTF-8'
+      },
+      body: JSON.stringify({"mid": mid})
+    })
   })
 }
 
