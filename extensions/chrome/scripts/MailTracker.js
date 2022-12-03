@@ -1,8 +1,7 @@
 
 
-// let lastUrl = location.href;
 var trackBtnEnabled = false;
-var HOST = "https://ac8c-2a10-8012-19-cb86-dc93-da73-7eab-1a5d.eu.ngrok.io";
+var HOST = "https://a3fb-2a10-8012-19-cb86-d86c-21bf-33b7-5da2.eu.ngrok.io";
 
 async function HmacSHA256(message, secret) {
   const enc = new TextEncoder("utf-8");
@@ -66,6 +65,8 @@ async function sendNewEmail(){
     res['gmail_utils']['mails'].push(mid);
     chrome.storage.local.set(res);
     
+    console.log("creating " + mid)
+
     // post new mid to webserver
     fetch(HOST+'/newMail/', {
       method: 'POST',
@@ -93,8 +94,8 @@ async function trackBtnClicked(){
       imgPayload.src = HOST + "/read?mid=" + mid;
       imgPayload.setAttribute("mid", mid);
       imgPayload.id = "gmailutils_img";
-      imgPayload.style.display = 'none'; // hide broken image icon
-
+      imgPayload.style.display = 'none';
+      
       document.getElementById(":ri").appendChild(imgPayload);
     });
   }
@@ -104,9 +105,41 @@ async function trackBtnClicked(){
 
 }
 
+function getEmailStatus(){
+  const imgPayload = this.document.querySelector('[id*=gmailutils_img]');
+    
+  if (imgPayload !== null && location.href.includes("inbox/")) {
+    // gmail creates custom url for user content(media & images), so the following
+    // parses the mid out of the src attribute of the <img/> payload.
+    const mid = imgPayload.getAttribute("src").split("?mid=")[1]
+    // get email status from API
+    fetch(HOST+'/status', {
+      method: 'POST',
+      mode: 'cors',
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Content-Type': 'application/json;charset=UTF-8'
+      },
+      body: JSON.stringify({"mid": mid})
+    })
+    .then((resp) => resp.json())
+    .then((data) => {
+      var date = new Date(data.lastOpened * 1000);
+      var seenText = document.createElement("p");
 
+      seenText.innerText = `✔️ Last seen at ${date.getHours()}:${date.getMinutes()} (${date.toLocaleDateString("en-GB")})`
+      seenText.style.color = "#40826d";
+
+      imgPayload.closest('div').appendChild(seenText);
+    });
+    
+  }
+}
 
 (async function main(){
+  // get status
+  window.addEventListener('popstate', getEmailStatus)
+
   // add 'click' event listener to the send button when composing a new gmail.
   const sendBtnDiv = await waitForElm('[class="dC"]');
   sendBtnDiv.firstChild.addEventListener('click', sendNewEmail);
@@ -153,38 +186,4 @@ function waitForElm(attr) {
     });
   });
 }
-
-
-
-// new MutationObserver(async () => {
-//   const url = location.href;
-//   if (url !== lastUrl && url.endsWith("?compose=new")) {
-//     lastUrl = url;
-//     if (elm) {
-//       elm.forEach((div) => {
-//         if (div.id=="ext_read_sign") {
-//           hasButton = true;
-//         }
-//       });
-//     }
-//     if (!hasButton){
-//       await change();
-//     }
-//   }
-// }).observe(document, {subtree: true, childList: true});
-// 
-// async function change(){
-//   elm = await waitForElm('[class="gU a0z"]');
-
-//   elm.forEach((div) => {
-//     var p = document.createElement("p");
-//     p.innerText = "hey";
-//     p.id = "ext_read_sign";
-//     p.style.color = "red";
-//     div.appendChild(p);
-//     return;
-//   })
-// };
-
-
 

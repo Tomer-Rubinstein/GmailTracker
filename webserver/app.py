@@ -1,15 +1,19 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
+from fastapi.encoders import jsonable_encoder
 from pydantic import BaseModel
 import pymongo
 import mongoenv
+import time
 
 conn_str = mongoenv.mongo_connstr_gmailutils # TODO: sort up the env vars shenanigans
 client = pymongo.MongoClient(conn_str, serverSelectionTimeoutMS=5000)
 db = client["GmailUtils"]
 mails_collection = db["mails"]
 
-class NewMailPostData(BaseModel):
+
+class PostDataModel(BaseModel):
   mid: str
 
 
@@ -23,24 +27,23 @@ app.add_middleware(
   allow_headers=["*"]
 )
 
-
 @app.post("/newMail")
-async def newMail(data: NewMailPostData):
-  print(data)
-  # mails_collection.insert_one({
-  #   "mid": data.mid,
-  #   "hasOpened": False,
-  #   "openedTimestamp": 0,
-  # })
+async def newMail(data: PostDataModel):
+  print("/newMail", data)
+  mails_collection.insert_one({
+    "mid": data.mid,
+    "iat": int(time.time()),
+    "lastOpened": 0,
+  })
 
 
-@app.get("/read", responses={
-  200: {
-    "content": {"image/png": {}}
-  }
-})
+@app.get("/read")
 async def readMail(mid: str):
-  # TODO: ignore read open if request IP comes from sender
   print(f"opened mail {mid}")
-  # TODO: return invis image as response
-  return "todo"
+  mails_collection.update_one({"mid": mid}, {"$set": {"lastOpened": int(time.time())}})
+
+
+@app.post("/status")
+async def getStatus(data: PostDataModel):
+  status = mails_collection.find_one({"mid": data.mid})
+  return JSONResponse(content=jsonable_encoder({"lastOpened": status["lastOpened"]}))
