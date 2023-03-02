@@ -18,7 +18,6 @@ class PostDataModel(BaseModel):
 
 
 app = FastAPI()
-
 app.add_middleware(
   CORSMiddleware,
   allow_origins=["*"],
@@ -26,6 +25,7 @@ app.add_middleware(
   allow_methods=["*"],
   allow_headers=["*"]
 )
+
 
 @app.post("/newMail")
 async def newMail(data: PostDataModel):
@@ -46,4 +46,9 @@ async def readMail(mid: str):
 @app.post("/status")
 async def getStatus(data: PostDataModel):
   status = mails_collection.find_one({"mid": data.mid})
-  return JSONResponse(content=jsonable_encoder({"lastOpened": status["lastOpened"]}))
+  resp = {}
+
+  if status != None:
+    resp = {"lastOpened": status["lastOpened"]}
+
+  return JSONResponse(content=jsonable_encoder(resp))
