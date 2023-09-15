@@ -8,6 +8,8 @@ A chrome extension developed for Gmail that is being used to check if recipients
 When one opens your email, Gmail will try to render the image so a request to our webserver will be made demanding the image given by the ``src`` attribute.
 However, ``src`` contains the ``mid`` (Mail Identifier) of your email. So if a request is made to that route, we know who opened your email and when.
 
+![Overall System Sketch](https://raw.githubusercontent.com/Tomer-Rubinstein/TwoTicks/main/design-files/overall-system-sketch.png)
+
 ## Run in debug mode
 When in directory ``/webserver``, execute:
 ```
